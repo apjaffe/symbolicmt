@@ -56,7 +56,7 @@ class IBM():
     epsilon = 1.0
     # (1) Initialize θ[i,j] = 1 / (|E| + 1) (Equation 100)
     #self.theta[ e[i], f[j] ] = TODO
-    self.theta = defaultdict(float)
+    self.theta = dict()
     #for word1 in self.src_vocab:
     #    for word2 in self.tgt_vocab:
     #      self.theta[(word1, word2)] = 1.0 / (self.tgt_len + 1)
@@ -64,8 +64,10 @@ class IBM():
       for word1 in sent1:
         len2 = len(sent2)
         for word2 in sent2:
-           self.theta[(word1, word2)] = 1.0 / (self.tgt_len+1) #(len2+1)
-        self.theta[(word1, NULL_ID)] = 1.0 / (self.tgt_len+1) 
+           self.theta[(word1, word2)] = 1.0 / (len2+1)#(self.tgt_len+1) #(len2+1)
+        #self.theta[(word1, NULL_ID)] = 1.0 / (len2+1)
+        self.theta[(word1, NULL_ID)] = 0.0
+        #self.theta[(word1, NULL_ID)] = 1.0 / (self.tgt_len+1) 
     print(len(self.theta))  
     for iter in range(self.max_iter):
       count = defaultdict(float)
@@ -88,8 +90,8 @@ class IBM():
       for sent1, sent2 in self.bitext_id:
         for word1 in sent1:
           for word2 in sent2:
-            self.theta[(word1, word2)] = count[(word1, word2)] / self.tgt_freq_id[word2]
-          self.theta[(word1, NULL_ID)] = count[(word1, NULL_ID)] /  self.tgt_sents
+            self.theta[(word1, word2)] = count[(word1, word2)] / self.src_freq_id[word1]
+          self.theta[(word1, NULL_ID)] = count[(word1, NULL_ID)] /  self.src_sents
       print(len(self.theta))      
  
       #with open("theta.pkl","w") as thetaf:
@@ -113,6 +115,9 @@ class IBM():
         ll += outerprodlog + math.log(epsilon) - (len(sent1) * math.log(len(sent2) + 1))
       print("Log Likelihood : %f" % (ll / wordlen))
     # (Optional) save/load model parameters for efficiency
+    if len(self.theta) < 300000:
+      with open("theta.pkl","w") as th:
+        pickle.dump(self.theta, th)
 		#[0] Log Likelihood : -5.232084
 		#[1] Log Likelihood : -4.542094
 		#[2] Log Likelihood : -4.321830
@@ -135,7 +140,8 @@ class IBM():
           if prob > max_prob:
             max_prob = prob
             max_j = j
-        align.append(max_j)
+        if max_j < len(e):
+          align.append((i,max_j))
         # ARGMAX_j θ[i,j] or other alignment in Section 11.6 (e.g., Intersection, Union, etc)
         #max_j, max_prob = argmax_j(f, e[i])
       #self.plot_alignment((max_j, max_prob), e, f)
@@ -144,7 +150,14 @@ class IBM():
 
 #def argmax(arr):
 #  return max(xrange(len(arr)), key = lambda i: arr[i])
-    
+
+def dump_align(alignments, f):    
+  for line in alignments:
+    out = []
+    for i, word in line:
+      out.append("%d-%d" % (word, i))
+    f.write(" ".join(out)+"\n")
+
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('--train_tgt')
@@ -158,6 +171,7 @@ def main():
   ibm.train()
   alignments = ibm.align()
   with open(args.output,"w") as alignf:
-    json.dump(alignments, alignf)
+    dump_align(alignments, alignf)
+    #json.dump(alignments, alignf)
 
 if __name__ == '__main__': main()

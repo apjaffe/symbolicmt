@@ -2,8 +2,9 @@ from collections import defaultdict
 def word_freqs(lines):
   word_frequencies = defaultdict(int)
   for line in lines:
-    for word in line.split(" "):
-      word_frequencies[word] += 1
+    if len(line) > 1:
+      for word in line.split(" "):
+        word_frequencies[word] += 1
   return word_frequencies
   
 def word_freq_split(lines):
@@ -22,6 +23,12 @@ def get_vocab(freqs):
 def defaultify(dct):
   wids = defaultdict(lambda: 0)
   for k, v in dct.items():
+    wids[k] = v
+  return wids
+
+def undefaultify(dct):
+  wids = dict()
+  for k,v in dct.items():
     wids[k] = v
   return wids
 
@@ -79,7 +86,7 @@ def read_file(fname):
       return f.read().split("\n")
 
 def split_words(lines):
-  return [line.split(" ") for line in lines]
+  return [line.split(" ") for line in lines if len(line) > 1]
       
 def read_bitext_file(f1, f2):
   lines1 = read_file(f1)
@@ -87,3 +94,22 @@ def read_bitext_file(f1, f2):
   words1 = split_words(lines1)
   words2 = split_words(lines2)
   return zip(words1, words2), words1, words2 
+
+def read_alignment(fname):
+  lines = read_file(fname)
+  alignment_e = []
+  alignment_f = []
+  for line in lines:
+    if len(line) > 1:
+      align_e = defaultdict(set)
+      align_f = defaultdict(set)
+      parts = line.split(" ")
+      for part in parts:
+        ef = part.split("-")
+        e = int(ef[0])
+        f = int(ef[1])
+        align_e[e].add(f)
+        align_f[f].add(e)
+      alignment_e.append(align_e)
+      alignment_f.append(align_f)
+  return alignment_e, alignment_f

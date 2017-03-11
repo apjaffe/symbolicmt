@@ -5,7 +5,7 @@ set -e
 # This assumes that you have OpenFST and the Python bindings installed
 
 DATA_DIR=en-de
-SCRIPT_DIR=assignment/pbmt
+SCRIPT_DIR=.
 OUT_DIR=output
 TRAIN_DATA=en-de/train.en-de.low.filt
 mkdir -p $OUT_DIR
@@ -14,7 +14,9 @@ mkdir -p $OUT_DIR
 python $SCRIPT_DIR/train-ngram.py $TRAIN_DATA.en $OUT_DIR/ngram-fst.txt
 
 # *** Implement 1: Train IBM Model 1 and find alignment
-python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.de --train_tgt $TRAIN_DATA.en --output $OUT_DIR/alignment.txt
+python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.de --train_tgt $TRAIN_DATA.en --output $OUT_DIR/alignment.txt --max_iter 7
+
+#python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN_DATA.de --output $OUT_DIR/alignmentinv.txt
 
 # *** Implement 2: Extract and score phrases
 python $SCRIPT_DIR/phrase-extract.py $TRAIN_DATA.de $TRAIN_DATA.en $OUT_DIR/alignment.txt $OUT_DIR/phrase.txt
