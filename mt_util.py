@@ -14,10 +14,11 @@ def word_freq_split(lines):
       word_frequencies[word] += 1
   return word_frequencies
   
-def get_vocab(freqs):
+def get_vocab(freqs, min_freq = 1):
   vocab = list()
   for word, freq in freqs.items():
-    vocab.append(word)
+    if freq >= min_freq:
+      vocab.append(word)
   return vocab
 
 def defaultify(dct):

@@ -2,6 +2,8 @@
 import mt_util
 import sys
 import json
+import math
+from collections import defaultdict
 
 '''
 Determine whether set of values is quasi-consecutive
@@ -36,7 +38,7 @@ Given an alignment, extract phrases consistent with the alignment
     -f: F sentence
   Return list of extracted phrases
 '''
-def phrase_extract(e_aligned_words, f_aligned_words, e, f):
+def phrase_extract(e_aligned_words, f_aligned_words, e, f, max_len):
   extracted_phrases = []
   # Loop over all substrings in the E
   for i1 in range(len(e)):
@@ -51,17 +53,39 @@ def phrase_extract(e_aligned_words, f_aligned_words, e, f):
         if len(sp) != 0 and min(sp) >= i1 and max(sp) <= i2: # Check that all elements in sp fall between i1 and i2 (inclusive)
           e_phrase = e[i1:i2+1]
           f_phrase = f[j1:j2+1]
-          extracted_phrases.append((e_phrase, f_phrase))
+          if len(e_phrase) <= max_len and len(f_phrase) <= max_len:
+            extracted_phrases.append((e_phrase, f_phrase))
           # Extend source phrase by adding unaligned words
           while j1 >= 0 and j1 not in f_aligned_words: # Check that j1 is unaligned
             j_prime = j2
             while j_prime < len(f) and j_prime not in f_aligned_words: # Check that j2 is unaligned
               f_phrase = f[j1:j_prime+1]
-              extracted_phrases.append((e_phrase, f_phrase))
+              if len(e_phrase) <= max_len and len(f_phrase) <= max_len:
+                extracted_phrases.append((e_phrase, f_phrase))
               j_prime += 1
             j1 -= 1
 
   return extracted_phrases
+
+def calc_probs(phrases):
+  count_fe = defaultdict(int)
+  count_e = defaultdict(int)
+  for ep, fp in phrases:
+    eps = " ".join(ep)
+    fps = " ".join(fp)
+    count_e[eps] += 1
+    count_fe[(fps, eps)] += 1
+
+  prob_fe = dict()
+  for ((fps, eps), c) in count_fe.items():
+    prob_fe[(fps,eps)] = math.log(c) - math.log(count_e[eps])
+  
+  return prob_fe
+
+def dump_probs(probs, fname):
+  with open(fname, "w") as out:
+    for ((fps, eps), p) in probs.items():
+      out.write("%s\t%s\t%f\n" % (fps, eps, -p))
 
 def main():
   train_src = mt_util.read_file(sys.argv[1])
@@ -69,11 +93,16 @@ def main():
   src_words = mt_util.split_words(train_src)
   tgt_words = mt_util.split_words(train_tgt)
   alignment_e, alignment_f = mt_util.read_alignment(sys.argv[3])
-  
+  outf = sys.argv[4]
+  max_len = int(sys.argv[5]) # max phrase length
+
   all_phrases = []
   for i in xrange(len(src_words)):
-    all_phrases += phrase_extract(alignment_e[i], alignment_f[i], tgt_words[i], src_words[i])
-    print(all_phrases)
-    break
+    all_phrases += phrase_extract(alignment_e[i], alignment_f[i], tgt_words[i], src_words[i], max_len)
+    if i%100 == 0:
+      print(i)
+
+  probs = calc_probs(all_phrases)
+  dump_probs(probs, outf)
 
 main()
