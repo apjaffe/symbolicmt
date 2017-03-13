@@ -78,14 +78,14 @@ def calc_probs(phrases):
 
   prob_fe = dict()
   for ((fps, eps), c) in count_fe.items():
-    prob_fe[(fps,eps)] = math.log(c) - math.log(count_e[eps])
+    prob_fe[(fps,eps)] = math.log(count_e[eps]) - math.log(c)
   
   return prob_fe
 
 def dump_probs(probs, fname):
   with open(fname, "w") as out:
     for ((fps, eps), p) in probs.items():
-      out.write("%s\t%s\t%f\n" % (fps, eps, -p))
+      out.write("%s\t%s\t%.4f\n" % (fps, eps, p))
 
 def main():
   train_src = mt_util.read_file(sys.argv[1])
@@ -97,7 +97,7 @@ def main():
   max_len = int(sys.argv[5]) # max phrase length
 
   all_phrases = []
-  for i in xrange(len(src_words)):
+  for i in xrange(min(len(src_words), len(alignment_e))):
     all_phrases += phrase_extract(alignment_e[i], alignment_f[i], tgt_words[i], src_words[i], max_len)
     if i%100 == 0:
       print(i)
