@@ -39,7 +39,7 @@ with open(sys.argv[2], "w") as outfile:
     print("%d %d %s %s %.4f" % (stateid[""], stateid[word], word, word, -math.log(v1)), file=outfile)
   print("%d %d <unk> <unk> %.4f" % (stateid[""], stateid[""], -math.log(PROB_UNK)), file=outfile)
   
-  # Print the unigrams
+  # Print the bigrams
   for (ctxt, word), val in count2.items():
     v1 = count1[word]/ctxts1
     v2 = val/ctxts2[ctxt]

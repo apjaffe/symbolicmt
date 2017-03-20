@@ -6,15 +6,17 @@ set -e
 
 DATA_DIR=en-de
 SCRIPT_DIR=.
-OUT_DIR=output
-TRAIN_DATA=en-de/train.en-de.low.filt
+OUT_DIR=output-tmp
+TRAIN_DATA=en-de/valid.en-de.low
+#OUT_DIR=output
+#TRAIN_DATA=en-de/train.en-de.low.filt
 mkdir -p $OUT_DIR
 
 # *** Train n-gram language model and create an FST
 python $SCRIPT_DIR/train-ngram.py $TRAIN_DATA.en $OUT_DIR/ngram-fst.txt
 
 # *** Implement 1: Train IBM Model 1 and find alignment
-python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.de --train_tgt $TRAIN_DATA.en --output $OUT_DIR/alignment.txt
+python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.de --train_tgt $TRAIN_DATA.en --output $OUT_DIR/alignment.txt --max_iter 50
 
 #python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN_DATA.de --output $OUT_DIR/alignmentinv.txt
 
