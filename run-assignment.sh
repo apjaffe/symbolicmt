@@ -6,17 +6,18 @@ set -e
 
 DATA_DIR=en-de
 SCRIPT_DIR=.
-OUT_DIR=output-tmp4
-TRAIN_DATA=en-de/valid.en-de.low
-#OUT_DIR=output
-#TRAIN_DATA=en-de/train.en-de.low.filt
+#OUT_DIR=output-tmp4
+#TRAIN_DATA=en-de/valid.en-de.low
+OUT_DIR=output
+TRAIN_DATA=en-de/train.en-de.low.filt
 mkdir -p $OUT_DIR
 
 # *** Train n-gram language model and create an FST
 python $SCRIPT_DIR/train-ngram.py $TRAIN_DATA.en $OUT_DIR/ngram-fst.txt
 
 # *** Implement 1: Train IBM Model 1 and find alignment
-python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.de --train_tgt $TRAIN_DATA.en --output $OUT_DIR/alignment.txt --max_iter 50
+#python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.de --train_tgt $TRAIN_DATA.en --output $OUT_DIR/alignment.txt --max_iter 50
+python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN_DATA.de --output $OUT_DIR/alignment.txt --max_iter 8 --min_freq 2 --model theta2.pkl --tokens tokens_2.json --output2 $OUT_DIR/word.txt
 
 #python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN_DATA.de --output $OUT_DIR/alignmentinv.txt
 
@@ -38,7 +39,7 @@ fstcompile --isymbols=$OUT_DIR/phrase-fst.isym --osymbols=$OUT_DIR/ngram-fst.isy
 # *** Compose and find the best path for each WFST
 for f in valid mini test blind; do
   echo "python $SCRIPT_DIR/decode.py $OUT_DIR/phrase-fst.fst $OUT_DIR/ngram-fst.fst $OUT_DIR/phrase-fst.isym $OUT_DIR/ngram-fst.isym < $DATA_DIR/$f.en-de.low.de > $OUT_DIR/$f.baseline.en"
-  python $SCRIPT_DIR/decode.py $OUT_DIR/phrase-fst.fst $OUT_DIR/ngram-fst.fst $OUT_DIR/phrase-fst.isym $OUT_DIR/ngram-fst.isym 4 < $DATA_DIR/$f.en-de.low.de > $OUT_DIR/$f.baseline.en
+  python $SCRIPT_DIR/decode.py $OUT_DIR/phrase-fst.fst $OUT_DIR/ngram-fst.fst $OUT_DIR/phrase-fst.isym $OUT_DIR/ngram-fst.isym 8 < $DATA_DIR/$f.en-de.low.de > $OUT_DIR/$f.baseline.en
   if [[ -e $DATA_DIR/$f.en-de.low.en ]]; then
     perl $SCRIPT_DIR/multi-bleu.perl $DATA_DIR/$f.en-de.low.en < $OUT_DIR/$f.baseline.en
   fi
