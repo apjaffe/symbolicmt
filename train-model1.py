@@ -5,8 +5,8 @@ import math
 import argparse
 import json
 import pickle
-import scipy.stats
 import os
+import scipy.stats
 
 # python ibmpseudo.py --train_src en-de/train.en-de.low.de --train_tgt en-de/train.en-de.low.en --max-iter 7
 # python ibmpseudo.py --train_src en-de/valid.en-de.low.de --train_tgt en-de/valid.en-de.low.en --max-iter 7

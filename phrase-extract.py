@@ -4,6 +4,7 @@ import sys
 import json
 import math
 from collections import defaultdict
+import multiprocessing
 
 '''
 Determine whether set of values is quasi-consecutive
@@ -87,18 +88,26 @@ def dump_probs(probs, fname):
     for ((fps, eps), p) in probs.items():
       out.write("%s\t%s\t%.4f\n" % (fps, eps, p))
 
-def main():
-  train_src = mt_util.read_file(sys.argv[1])
-  train_tgt = mt_util.read_file(sys.argv[2])
-  src_words = mt_util.split_words(train_src)
-  tgt_words = mt_util.split_words(train_tgt)
-  alignment_e, alignment_f = mt_util.read_alignment(sys.argv[3])
-  outf = sys.argv[4]
-  max_len = int(sys.argv[5]) # max phrase length
 
+
+train_src = mt_util.read_file(sys.argv[1])
+train_tgt = mt_util.read_file(sys.argv[2])
+src_words = mt_util.split_words(train_src)
+tgt_words = mt_util.split_words(train_tgt)
+alignment_e, alignment_f = mt_util.read_alignment(sys.argv[3])
+outf = sys.argv[4]
+max_len = int(sys.argv[5]) # max phrase length
+
+def process_i(i):
+  return i, phrase_extract(alignment_e[i], alignment_f[i], tgt_words[i], src_words[i], max_len)
+
+
+NUM_THREADS = 4
+def main():
+  pool = multiprocessing.Pool(processes = NUM_THREADS)
   all_phrases = []
-  for i in xrange(min(len(src_words), len(alignment_e))):
-    all_phrases += phrase_extract(alignment_e[i], alignment_f[i], tgt_words[i], src_words[i], max_len)
+  for i, phrases in pool.imap(process_i, xrange(min(len(src_words), len(alignment_e)))):
+    all_phrases += phrases
     if i%100 == 0:
       print(i)
 
