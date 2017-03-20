@@ -7,7 +7,7 @@ from collections import defaultdict
 
 # Define the hyperparameters
 N = 2
-EVAL_EVERY = 1000
+EVAL_EVERY = 50000
 EMB_SIZE = 64
 HID_SIZE = 64
 
@@ -43,7 +43,7 @@ swid = wids["<s>"]
 stwid = wids["</s>"]
 word_lookup = dict()
 for word, freq in word_frequencies.items():
-  if freq > 10:
+  if freq > 12:
     wids[word] = len(wids) 
 
 for word, wid in wids.items():
@@ -147,19 +147,33 @@ def generate_sentence():
 def write_ngrams(f):
   stateid = defaultdict(lambda: len(stateid))
   stateid["<s>"] = 0
-
+  err_prob = 0.1
+  base_prob = 0.001 #1/len(wids)
   with open(f,"w") as outfile:
+    #bigrams
     for word1, wid1 in wids.items():
       ctx = [wid1]
       s_val = calc_function(ctx)
       p = dy.softmax(s_val).value()
       for word2, wid2 in wids.items():
-        print("%d %d %s %s %.4f" % (stateid[wid1], stateid[wid2], word2, word2, -math.log(p[wid2])), file = outfile)
+        if p[wid2] > base_prob:
+          print("%d %d %s %s %.4f" % (stateid[wid1], stateid[wid2], word2, word2, -math.log(p[wid2])), file = outfile)
 
+    #fallbacks
+    for word1, wid1 in wids.items():
+      print("%d %d <eps> <eps> %.4f" % (stateid[wid1], stateid[""], -math.log(err_prob)), file=outfile)
+
+    #unigrams
+    b_s = dy.parameter(b_s_p)
+    b_val = dy.softmax(b_s).value()
+    for word1, wid1 in wids.items():
+      print("%d %d %s %s %.4f" % (stateid[""], stateid[wid1], word1, word1, -math.log(b_val[wid1])),file=outfile)
+
+    #final state
     print(stateid["</s>"], file=outfile)
 
 
-if False:
+if True:
   (M_p, W_mh_p, b_h_p, W_hs_p, b_s_p) = model.load("model1.mdl")
   print(generate_sentence())
 
