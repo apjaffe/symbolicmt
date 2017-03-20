@@ -12,13 +12,24 @@ import os
 # python ibmpseudo.py --train_src en-de/valid.en-de.low.de --train_tgt en-de/valid.en-de.low.en --max-iter 7
 
 
+NULL = "</S>"
+NULL_ID = 2
 align_gauss = scipy.stats.norm(0, 10)
 gauss_pdf = align_gauss.pdf
 poly = lambda x: (abs(x)+20)**(-0.5)
-def align_prob(diff):
-  if diff is None:
+def align_prob(diff, word1 = None, word2 = None):
+  if word1 == NULL_ID:
+    diff = 0
+  elif word2 == NULL_ID:
+    diff = 0
+  elif diff is None:
     diff = 0
   return poly(diff) 
+
+def iterplus(iterable, plus):
+  for x in iterable:
+    yield x
+  yield plus
 
 '''
   Alignment: P( E | F) = Σ_θ P( θ, F | E) (Equation 98)
@@ -30,8 +41,6 @@ def align_prob(diff):
   (3) Calculate data likelihood (Equation 106)
 '''
 
-NULL = "</S>"
-NULL_ID = 2
 class IBM():
   def __init__(self, bitext, src_text, tgt_text, max_iter, min_freq, load_tokens):
     self.bitext = bitext
@@ -112,14 +121,14 @@ class IBM():
     #      self.theta[(word1, word2)] = 1.0 / (self.tgt_len + 1)
     maxlen = 0
     for sent1, sent2 in self.bitext_id:
-      for word1 in sent1:
+      for word1 in iterplus(sent1,NULL_ID):
         len1 = len(sent1)
         len2 = len(sent2)
         maxlen = max(maxlen,len1)
         for word2 in sent2:
           self.theta[(word1, word2)] = 1.0 / (self.src_len)#(len1+1)#(self.tgt_len+1) #(len2+1)
         #self.theta[(word1, NULL_ID)] = 1.0 / (self.tgt_len)#(len1+1)
-        self.theta[(word1, NULL_ID)] = 0.0
+        #self.theta[(word1, NULL_ID)] = 0.0
         #self.theta[(word1, NULL_ID)] = 1.0 / (self.tgt_len+1) 
     print("Theta size: %d" % len(self.theta))  
     #self.diagnose("wir","we")
@@ -131,24 +140,24 @@ class IBM():
       #count[e[i], f[j]] = TODO
       sums = defaultdict(float)
       for sent1, sent2 in self.bitext_id:
-        for i, word1 in enumerate(sent1):
+        for i, word1 in enumerate(iterplus(sent1, NULL_ID)):
           sumprob = 0.0
           for j, word2 in enumerate(sent2):
-            prob = self.theta[(word1, word2)] * align_prob(i-j)
+            prob = self.theta[(word1, word2)] * align_prob(i-j, word1, word2)
             sumprob += prob
-          sumprob += self.theta[(word1, NULL_ID)]
+          #sumprob += self.theta[(word1, NULL_ID)]
           for j, word2 in enumerate(sent2):
-            prob = self.theta[(word1, word2)] * align_prob(i-j)
+            prob = self.theta[(word1, word2)] * align_prob(i-j, word1, word2)
             count[(word1,word2)] += prob / sumprob
             sums[word2] += prob / sumprob
-          count[(word1,NULL_ID)] += self.theta[(word1, NULL_ID)] * align_prob(None) / sumprob
-          sums[NULL_ID] += self.theta[(word1, NULL_ID)] * align_prob(None) / sumprob
+          #count[(word1,NULL_ID)] += self.theta[(word1, NULL_ID)] * align_prob(None) / sumprob
+          #sums[NULL_ID] += self.theta[(word1, NULL_ID)] * align_prob(None) / sumprob
       # (2) [M] θ[i,j] =  C[i,j] / Σ_j C[i,j] (Equation 107)
       #self.theta[ e[i], f[j] ] = TODO 
       #for word1 in self.src_vocab:
       #  for word2 in self.tgt_vocab:
       for sent1, sent2 in self.bitext_id:
-        for word1 in sent1:
+        for word1 in iterplus(sent1, NULL_ID):
           for word2 in sent2:
             #self.theta[(word1, word2)] = count[(word1, word2)] / self.tgt_freq_id[word2]
             self.theta[(word1, word2)] = count[(word1, word2)] / sums[word2]
@@ -171,11 +180,11 @@ class IBM():
       for sent1, sent2 in self.bitext_id:
         outerprodlog = 0.0
         wordlen += len(sent1)
-        for word1 in sent1:
+        for word1 in iterplus(sent1, NULL_ID):
           innersum = 0.0
           for word2 in sent2:
             innersum += self.theta[(word1, word2)]
-          innersum += self.theta[(word1, NULL_ID)]
+          #innersum += self.theta[(word1, NULL_ID)]
           outerprodlog += math.log(innersum)
         ll += outerprodlog + math.log(epsilon) - (len(sent1) * math.log(len(sent2) + 1))
       print("Log Likelihood : %f" % (ll / wordlen))
@@ -235,9 +244,9 @@ class IBM():
         wordi = e[i]
         max_prob = 0
         max_j = None
-        for j in xrange(len(f)):
-          wordj = f[j] #if j < len(f) else NULL_ID
-          diff = i-j #if j < len(f) else None
+        for j in xrange(len(f)+1):
+          wordj = f[j] if j < len(f) else NULL_ID
+          diff = i-j if j < len(f) else None
           prob = self.theta[(wordj, wordi)] * align_prob(i-j)
           #print("P(%s|%s)=%f"%(self.src_id_to_token[wordi], self.tgt_id_to_token[wordj], prob))
           if prob > max_prob:

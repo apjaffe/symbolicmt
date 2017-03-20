@@ -10,6 +10,8 @@ python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.de --train_tgt $TRAIN
 OUT_DIR=output-tmp3
 python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.de --train_tgt $TRAIN_DATA.en --output $OUT_DIR/alignment.txt --max_iter 8 --min_freq 1 --model theta_tmp.pkl --tokens tokens_allvalid.json
 
-python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN_DATA.de --output $OUT_DIR/alignment.txt --max_iter 8 --min_freq 1 --model theta_tmp.pkl --tokens tokens_allvalid.json
+python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN_DATA.de --output $OUT_DIR/alignment.txt --max_iter 8 --min_freq 1 --model theta4.pkl --tokens tokens_allvalid.json
 
-python neubigfflm.py
+python neural-ngram.py en-de/valid.en-de.low.en en-de/valid.en-de.low.en
+
+python neural-ngram.py en-de/train.en-de.low.en en-de/valid.en-de.low.en
