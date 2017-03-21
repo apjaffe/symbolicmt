@@ -55,10 +55,10 @@ def main():
           output.write("%d %d <eps> <eps> %.4f\n" % (last_state, initial_state, cost))
 
 
-      # allow words to be ignored or inserted
-#      INSERT_DELETE_COST = 8
-#      for src in src_words:
-#        output.write("0 0 %s <eps> %.4f\n" % (src, INSERT_DELETE_COST))
+      # allow words that can't be processed to become UNK
+      INSERT_DELETE_COST = 15
+      for src in src_words:
+        output.write("0 0 %s <unk> %.4f\n" % (src, INSERT_DELETE_COST))
 #      for tgt in tgt_words:
 #        output.write("0 0 <eps> %s %.4f\n" % (tgt, INSERT_DELETE_COST))
 
