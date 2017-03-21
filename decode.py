@@ -35,7 +35,10 @@ def process_line(line):
   # Read input 
   compiler = fst.Compiler()
   arr = line.strip().split() + ["</s>"]
+  unks = []
   for i, x in enumerate(arr):
+    if x not in isym:
+      unks.append(x)
     xsym = isym[x] if x in isym else isym["<unk>"]
     print >> compiler, "%d %d %s %s" % (i, i+1, xsym, xsym)
   print >> compiler, "%s" % (len(arr))
@@ -48,10 +51,17 @@ def process_line(line):
 
   # Read off the output
   out = []
+  unkspot = 0
   for state in graph.states():
     for arc in graph.arcs(state):
       if arc.olabel != 0:
-        out.append(osym[arc.olabel])
+        tok = osym[arc.olabel]
+        # unk substitution (original words in same order)
+        if unkspot < len(unks) and tok == "<unk>":
+          out.append(unks[unkspot])
+          unkspot += 1
+        else:
+          out.append(tok)
   return " ".join(reversed(out[1:]))
 
   # Read input 

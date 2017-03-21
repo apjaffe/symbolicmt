@@ -237,7 +237,8 @@ class IBM():
     PENALTY = -math.log(0.01)
     for (word1, word2), prob in self.theta.items():
       if prob >= thresh:
-        outf.write("%s\t%s\t%.4f\n" % (self.tgt_to_tok(word2), self.src_to_tok(word1), -math.log(prob) + PENALTY))
+        unk_penalty = -math.log(0.9) if word1==NULL_ID else 0
+        outf.write("%s\t%s\t%.4f\n" % (self.tgt_to_tok(word2), self.src_to_tok(word1), -math.log(prob) + PENALTY + unk_penalty))
 
   def align(self):
     alignments = []

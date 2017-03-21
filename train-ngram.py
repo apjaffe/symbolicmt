@@ -29,7 +29,7 @@ if len(sys.argv) > 3:
         if word not in count1:
           count1[word] = 0.01
 
-ALPHA_1 = 0.1
+ALPHA_1 = 0.03
 ALPHA_UNK = 0.01
 ALPHA_2 = 1.0 - ALPHA_1 - ALPHA_UNK
 PROB_UNK = ALPHA_UNK / 10000000

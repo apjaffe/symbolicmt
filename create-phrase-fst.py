@@ -17,6 +17,8 @@ def main():
           src_words |= set(f)
           tgt_words |= set(e)
           cost = float(parts[2])
+          if len(e) < len(f):
+            cost += 0.05*(len(f) - len(e)) # deal with brevity penalty
 
           if len(f) == 1 and len(e) == 1:
             output.write("%d %d %s %s %.4f\n" % (initial_state, initial_state, f[0], e[0], cost))
