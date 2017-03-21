@@ -86,9 +86,8 @@ def calc_probs(phrases):
 def dump_probs(probs, fname):
   with open(fname, "w") as out:
     for ((fps, eps), p) in probs.items():
-      out.write("%s\t%s\t%.4f\n" % (fps, eps, p))
-
-
+      if len(fps) > 0 and len(eps) > 0:
+        out.write("%s\t%s\t%.4f\n" % (fps, eps, p))
 
 train_src = mt_util.read_file(sys.argv[1])
 train_tgt = mt_util.read_file(sys.argv[2])
@@ -106,9 +105,10 @@ NUM_THREADS = 4
 def main():
   pool = multiprocessing.Pool(processes = NUM_THREADS)
   all_phrases = []
+  print(len(src_words), len(alignment_e))
   for i, phrases in pool.imap(process_i, xrange(min(len(src_words), len(alignment_e)))):
     all_phrases += phrases
-    if i%100 == 0:
+    if i%1000 == 0:
       print(i)
 
   probs = calc_probs(all_phrases)

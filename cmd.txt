@@ -15,3 +15,5 @@ python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN
 python neural-ngram.py en-de/valid.en-de.low.en en-de/valid.en-de.low.en
 
 python neural-ngram.py en-de/train.en-de.low.en en-de/valid.en-de.low.en
+
+python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN_DATA.de --output $OUT_DIR/alignment.txt --max_iter 8 --min_freq 1 --model theta3.pkl --tokens tokens_1v.json --output2 $OUT_DIR/word.txt

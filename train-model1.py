@@ -12,19 +12,22 @@ import scipy.stats
 # python ibmpseudo.py --train_src en-de/valid.en-de.low.de --train_tgt en-de/valid.en-de.low.en --max-iter 7
 
 
-NULL = "</S>"
+NULL = "</s>"
 NULL_ID = 2
 align_gauss = scipy.stats.norm(0, 10)
 gauss_pdf = align_gauss.pdf
-poly = lambda x: (abs(x)+20)**(-0.5)
-def align_prob(diff, word1 = None, word2 = None):
+poly = lambda x: (abs(x)+50)**(-0.5)
+base = poly(0)
+def align_prob(diff, word1 = None, word2 = None, training = False):
+  if training:
+    return 1
   if word1 == NULL_ID:
     diff = 0
   elif word2 == NULL_ID:
     diff = 0
   elif diff is None:
     diff = 0
-  return poly(diff) 
+  return poly(diff)/base
 
 def iterplus(iterable, plus):
   for x in iterable:
@@ -116,20 +119,27 @@ class IBM():
     if os.path.isfile(theta_pkl):
       with open(theta_pkl) as th:
         self.theta = pickle.load(th)
-    #for word1 in self.src_vocab:
-    #    for word2 in self.tgt_vocab:
-    #      self.theta[(word1, word2)] = 1.0 / (self.tgt_len + 1)
-    maxlen = 0
-    for sent1, sent2 in self.bitext_id:
-      for word1 in iterplus(sent1,NULL_ID):
-        len1 = len(sent1)
-        len2 = len(sent2)
-        maxlen = max(maxlen,len1)
-        for word2 in sent2:
-          self.theta[(word1, word2)] = 1.0 / (self.src_len)#(len1+1)#(self.tgt_len+1) #(len2+1)
-        #self.theta[(word1, NULL_ID)] = 1.0 / (self.tgt_len)#(len1+1)
-        #self.theta[(word1, NULL_ID)] = 0.0
-        #self.theta[(word1, NULL_ID)] = 1.0 / (self.tgt_len+1) 
+      maxlen = 0
+      for sent1, sent2 in self.bitext_id:
+        for word1 in iterplus(sent1,NULL_ID):
+          len1 = len(sent1)
+          len2 = len(sent2)
+          maxlen = max(maxlen,len1)
+    else:
+      #for word1 in self.src_vocab:
+      #    for word2 in self.tgt_vocab:
+      #      self.theta[(word1, word2)] = 1.0 / (self.tgt_len + 1)
+      maxlen = 0
+      for sent1, sent2 in self.bitext_id:
+        for word1 in iterplus(sent1,NULL_ID):
+          len1 = len(sent1)
+          len2 = len(sent2)
+          maxlen = max(maxlen,len1)
+          for word2 in sent2:
+            self.theta[(word1, word2)] = 1.0 / (self.src_len)#(len1+1)#(self.tgt_len+1) #(len2+1)
+          #self.theta[(word1, NULL_ID)] = 1.0 / (self.tgt_len)#(len1+1)
+          #self.theta[(word1, NULL_ID)] = 0.0
+          #self.theta[(word1, NULL_ID)] = 1.0 / (self.tgt_len+1) 
     print("Theta size: %d" % len(self.theta))  
     #self.diagnose("wir","we")
     # http://mt-class.org/jhu/slides/lecture-ibm-model1.pdf
@@ -143,11 +153,11 @@ class IBM():
         for i, word1 in enumerate(iterplus(sent1, NULL_ID)):
           sumprob = 0.0
           for j, word2 in enumerate(sent2):
-            prob = self.theta[(word1, word2)] * align_prob(i-j, word1, word2)
+            prob = self.theta[(word1, word2)] * align_prob(i-j, word1, word2, True)
             sumprob += prob
           #sumprob += self.theta[(word1, NULL_ID)]
           for j, word2 in enumerate(sent2):
-            prob = self.theta[(word1, word2)] * align_prob(i-j, word1, word2)
+            prob = self.theta[(word1, word2)] * align_prob(i-j, word1, word2, True)
             count[(word1,word2)] += prob / sumprob
             sums[word2] += prob / sumprob
           #count[(word1,NULL_ID)] += self.theta[(word1, NULL_ID)] * align_prob(None) / sumprob
@@ -210,6 +220,25 @@ class IBM():
 		#[5] Log Likelihood : -4.191590
 		#[6] Log Likelihood : -4.181324
 
+  def tgt_to_tok(self, id):
+    if id == NULL_ID:
+      return "<eps>"
+    else:
+      return self.tgt_id_to_token[id]
+
+  def src_to_tok(self, id):
+    if id == NULL_ID:
+      return "<eps>"
+    else:
+      return self.src_id_to_token[id]
+
+  def dump_words(self, outf):
+    thresh = 0.0000001
+    PENALTY = -math.log(0.01)
+    for (word1, word2), prob in self.theta.items():
+      if prob >= thresh:
+        outf.write("%s\t%s\t%.4f\n" % (self.tgt_to_tok(word2), self.src_to_tok(word1), -math.log(prob) + PENALTY))
+
   def align(self):
     alignments = []
     for idx, (f, e) in enumerate(self.bitext_id):
@@ -221,7 +250,7 @@ class IBM():
         for j in xrange(len(e) + 1):
           wordj = e[j] if j < len(e) else NULL_ID
           diff = i-j if j < len(e) else None
-          prob = self.theta[(wordi, wordj)] * align_prob(i-j)
+          prob = self.theta[(wordi, wordj)] * align_prob(i-j, None, None, False)
           #print("P(%s|%s)=%f"%(self.src_id_to_token[wordi], self.tgt_id_to_token[wordj], prob))
           if prob > max_prob:
             max_prob = prob 
@@ -244,10 +273,10 @@ class IBM():
         wordi = e[i]
         max_prob = 0
         max_j = None
-        for j in xrange(len(f)+1):
+        for j in xrange(len(f)):
           wordj = f[j] if j < len(f) else NULL_ID
           diff = i-j if j < len(f) else None
-          prob = self.theta[(wordj, wordi)] * align_prob(i-j)
+          prob = self.theta[(wordj, wordi)] * align_prob(i-j, None, None, False)
           #print("P(%s|%s)=%f"%(self.src_id_to_token[wordi], self.tgt_id_to_token[wordj], prob))
           if prob > max_prob:
             max_prob = prob 
@@ -281,6 +310,7 @@ def main():
   parser.add_argument('--min_freq', default = 1)
   parser.add_argument('--model', default = "theta.pkl")
   parser.add_argument('--tokens', default = "tokens.json")
+  parser.add_argument('--output2')
   args = parser.parse_args()
   bitext, src_text, tgt_text = mt_util.read_bitext_file(args.train_src, args.train_tgt )
   #print(bitext[0], src_text[0], tgt_text[0])
@@ -291,5 +321,7 @@ def main():
   with open(args.output,"w") as alignf:
     dump_align(alignments, alignf)
     #json.dump(alignments, alignf)
+  with open(args.output2,"w") as wordf:
+    ibm.dump_words(wordf)
 
 if __name__ == '__main__': main()

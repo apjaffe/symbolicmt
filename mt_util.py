@@ -35,9 +35,9 @@ def undefaultify(dct):
 
 def word_ids(word_frequencies, min_freq=2):
   wids = defaultdict(lambda: 0)
-  wids["<UNK>"] = 0
-  wids["<S>"] = 1
-  wids["</S>"] = 2
+  wids["<unk>"] = 0
+  wids["<s>"] = 1
+  wids["</s>"] = 2
   for word, freq in word_frequencies.items():
     if freq >= min_freq:
       wids[word] = len(wids) 
@@ -45,7 +45,7 @@ def word_ids(word_frequencies, min_freq=2):
   return wids, invert_ids(wids)
 
 def invert_ids(wids):
-  word_lookup = defaultdict(lambda: "<UNK>")
+  word_lookup = defaultdict(lambda: "<unk>")
   for word, wid in wids.items():
     word_lookup[wid] = word
   
@@ -56,7 +56,7 @@ def get_get_wid(wids):
     if word in wids:
       return wids[word]
     else:
-      return wids["<UNK>"]
+      return wids["<unk>"]
    
 def clean(wd):
   return wd.decode("utf-8").encode("ascii","ignore")
