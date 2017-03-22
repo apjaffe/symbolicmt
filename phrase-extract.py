@@ -79,7 +79,8 @@ def calc_probs(phrases):
 
   prob_fe = dict()
   for ((fps, eps), c) in count_fe.items():
-    prob_fe[(fps,eps)] = math.log(count_e[eps]) - math.log(c)
+    # plus 1 smoothing
+    prob_fe[(fps,eps)] = math.log(count_e[eps]+1) - math.log(c)
   
   return prob_fe
 

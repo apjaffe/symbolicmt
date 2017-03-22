@@ -29,33 +29,35 @@ if len(sys.argv) > 3:
         if word not in count1:
           count1[word] = 0.01
 
-ALPHA_1 = 0.03
+ALPHA_1 = 0.1 #0.03
 ALPHA_UNK = 0.01
 ALPHA_2 = 1.0 - ALPHA_1 - ALPHA_UNK
 PROB_UNK = ALPHA_UNK / 10000000
+
+MULT = 0.7 #0.8 was best #0.9 #0.3
 
 stateid = defaultdict(lambda: len(stateid))
 
 with open(sys.argv[2], "w") as outfile:
 
   # Print the fallbacks
-  print("%d %d <eps> <eps> %.4f" % (stateid["<s>"], stateid[""], -math.log(ALPHA_1)), file=outfile)
+  print("%d %d <eps> <eps> %.4f" % (stateid["<s>"], stateid[""], -math.log(ALPHA_1) * MULT), file=outfile)
   for ctxt, val in ctxts2.items():
     if ctxt != "<s>":
-      print("%d %d <eps> <eps> %.4f" % (stateid[ctxt], stateid[""], -math.log(ALPHA_1)), file=outfile)
+      print("%d %d <eps> <eps> %.4f" % (stateid[ctxt], stateid[""], -math.log(ALPHA_1) * MULT), file=outfile)
   
   # Print the unigrams
   for word, val in count1.items():
     v1 = val/ctxts1
-    print("%d %d %s %s %.4f" % (stateid[""], stateid[word], word, word, -math.log(v1)), file=outfile)
-  print("%d %d <unk> <unk> %.4f" % (stateid[""], stateid[""], -math.log(PROB_UNK)), file=outfile)
+    print("%d %d %s %s %.4f" % (stateid[""], stateid[word], word, word, -math.log(v1) * MULT), file=outfile)
+  print("%d %d <unk> <unk> %.4f" % (stateid[""], stateid[""], -math.log(PROB_UNK) * MULT), file=outfile)
   
   # Print the bigrams
   for (ctxt, word), val in count2.items():
     v1 = count1[word]/ctxts1
     v2 = val/ctxts2[ctxt]
     val = ALPHA_2 * v2 + ALPHA_1 * v1 + PROB_UNK
-    print("%d %d %s %s %.4f" % (stateid[ctxt], stateid[word], word, word, -math.log(val)), file=outfile)
+    print("%d %d %s %s %.4f" % (stateid[ctxt], stateid[word], word, word, -math.log(val) * MULT), file=outfile)
  
 	# extra unigrams
 #  if len(sys.argv) > 3:

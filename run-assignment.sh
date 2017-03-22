@@ -6,18 +6,19 @@ set -e
 
 DATA_DIR=en-de
 SCRIPT_DIR=.
-#OUT_DIR=output-full3
-TRAIN_DATA=en-de/valid.en-de.low
-OUT_DIR=output-tmp6
-#TRAIN_DATA=en-de/train.en-de.low.filt
+OUT_DIR=output-full4
+#TRAIN_DATA=en-de/valid.en-de.low
+#OUT_DIR=output-tmp6
+TRAIN_DATA=en-de/train.en-de.low.filt
 mkdir -p $OUT_DIR
 
 # *** Train n-gram language model and create an FST
 python $SCRIPT_DIR/train-ngram.py $TRAIN_DATA.en $OUT_DIR/ngram-fst.txt
 
 # *** Implement 1: Train IBM Model 1 and find alignment
+python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN_DATA.de --output $OUT_DIR/alignment.txt --max_iter 40 --min_freq 1 --model theta_6.pkl --tokens tokens_1c.json --output2 $OUT_DIR/word.txt
 #python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.de --train_tgt $TRAIN_DATA.en --output $OUT_DIR/alignment.txt --max_iter 50
-python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN_DATA.de --output $OUT_DIR/alignment.txt --max_iter 0 --min_freq 1 --model theta_2v0.pkl --tokens tokens_1v.json --output2 $OUT_DIR/word.txt
+#python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN_DATA.de --output $OUT_DIR/alignment.txt --max_iter 0 --min_freq 1 --model theta_2v0.pkl --tokens tokens_1v.json --output2 $OUT_DIR/word.txt
 #python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN_DATA.de --output $OUT_DIR/alignment.txt --max_iter 15 --min_freq 1 --model theta_5.pkl --tokens tokens_1b.json --output2 $OUT_DIR/word.txt
 
 #python $SCRIPT_DIR/train-model1.py --train_src $TRAIN_DATA.en --train_tgt $TRAIN_DATA.de --output $OUT_DIR/alignmentinv.txt

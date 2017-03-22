@@ -64,27 +64,6 @@ def process_line(line):
           out.append(tok)
   return " ".join(reversed(out[1:]))
 
-  # Read input 
-  compiler = fst.Compiler()
-  arr = line.strip().split() + ["</s>"]
-  for i, x in enumerate(arr):
-    xsym = isym[x] if x in isym else isym["<unk>"]
-    print >> compiler, "%d %d %s %s" % (i, i+1, xsym, xsym)
-  print >> compiler, "%s" % (len(arr))
-  ifst = compiler.compile()
-
-  # Create the search graph and do search
-  graph = fst.compose(ifst, tm)
-  graph = fst.compose(graph, lm)
-  graph = fst.shortestpath(graph)
-
-  # Read off the output
-  out = []
-  for state in graph.states():
-    for arc in graph.arcs(state):
-      if arc.olabel != 0:
-        out.append(osym[arc.olabel])
-  print(" ".join(reversed(out[1:])))
 
 def main():
   init()

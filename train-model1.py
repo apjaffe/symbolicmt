@@ -262,7 +262,7 @@ class IBM():
         #max_j, max_prob = argmax_j(f, e[i])
       #self.plot_alignment((max_j, max_prob), e, f)
       alignments.append(align)
-      if idx % 100 == 0:
+      if idx % 1000 == 0:
         print(idx)
     return alignments
   
@@ -288,7 +288,7 @@ class IBM():
         #max_j, max_prob = argmax_j(f, e[i])
       #self.plot_alignment((max_j, max_prob), e, f)
       alignments.append(align)
-      if idx % 100 == 0:
+      if idx % 1000 == 0:
         print(idx)
     return alignments
 
