@@ -61,8 +61,6 @@ def main():
       INSERT_DELETE_COST = 15
       for src in src_words:
         output.write("0 0 %s <unk> %.4f\n" % (src, INSERT_DELETE_COST))
-#      for tgt in tgt_words:
-#        output.write("0 0 <eps> %s %.4f\n" % (tgt, INSERT_DELETE_COST))
 
       output.write("0 0 </s> </s>\n")
       output.write("0 0 <unk> <unk>\n")

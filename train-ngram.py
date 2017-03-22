@@ -29,12 +29,12 @@ if len(sys.argv) > 3:
         if word not in count1:
           count1[word] = 0.01
 
-ALPHA_1 = 0.1 #0.03
+ALPHA_1 = 0.1
 ALPHA_UNK = 0.01
 ALPHA_2 = 1.0 - ALPHA_1 - ALPHA_UNK
 PROB_UNK = ALPHA_UNK / 10000000
 
-MULT = 0.7 #0.8 was best #0.9 #0.3
+MULT = 0.7
 
 stateid = defaultdict(lambda: len(stateid))
 
@@ -59,17 +59,6 @@ with open(sys.argv[2], "w") as outfile:
     val = ALPHA_2 * v2 + ALPHA_1 * v1 + PROB_UNK
     print("%d %d %s %s %.4f" % (stateid[ctxt], stateid[word], word, word, -math.log(val) * MULT), file=outfile)
  
-	# extra unigrams
-#  if len(sys.argv) > 3:
-#    with open(sys.argv[3]) as extra:
-#      col2 = 3
-#      for line in extra:
-#        arr = line.strip().split()
-#        if len(arr) > col2:
-#          word = arr[col2]
-#          print("%d %d %s %s %.4f" % (stateid[""], stateid[word], word, word, -math.log(PROB_UNK)), file=outfile)
-        	
-
   
   # Print the final state
   print(stateid["</s>"], file=outfile) 
